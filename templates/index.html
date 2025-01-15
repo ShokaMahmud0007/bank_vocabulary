@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English to Bangla Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+        }
+        #quiz-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            width: 80%;
+            max-width: 600px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        #start-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #correct-btn, #incorrect-btn, #never-repeat-btn, #show-meaning-btn {
+            background-color: #1E90FF;
+            color: white;
+        }
+        #finish-btn {
+            background-color: #FF6347;
+            color: white;
+        }
+        #score-display {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        #error-msg {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-container">
+        <h1>English to Bangla Quiz</h1>
+        <div id="word-display">Press "Start" to begin the quiz!</div>
+        <div id="meaning-container" style="display:none;">
+            <p id="meaning-display" style="display:none;"></p>
+            <button id="show-meaning-btn" onclick="showMeaning()">Show Meaning</button>
+            <button id="correct-btn" onclick="answer(true)">Correct</button>
+            <button id="incorrect-btn" onclick="answer(false)">Incorrect</button>
+            <button id="never-repeat-btn" onclick="markNeverRepeat()">Never Repeat</button>
+        </div>
+        <button id="start-btn" onclick="getWord()">Start</button>
+        <button id="finish-btn" onclick="finishQuiz()">Finish Quiz</button>
+        <h3 id="score-display">Score: 0</h3>
+        <div id="error-msg"></div>
+    </div>
+
+    <script>
+        let currentWord = "";
+
+        function getWord() {
+            document.getElementById("error-msg").innerText = "";
+            fetch('/get_word')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("word-display").innerText = data.error;
+                        document.getElementById("meaning-container").style.display = "none";
+                    } else {
+                        currentWord = data.word;
+                        document.getElementById("word-display").innerText = `Word: ${data.word}`;
+                        document.getElementById("meaning-display").innerText = `Meaning: ${data.meaning}`;
+                        document.getElementById("meaning-container").style.display = "block";
+                        document.getElementById("meaning-display").style.display = "none"; // Hide meaning initially
+                        document.getElementById("show-meaning-btn").style.display = "inline-block";
+                    }
+                })
+                .catch(() => {
+                    document.getElementById("error-msg").innerText = "Error fetching word. Try again.";
+                });
+        }
+
+        function showMeaning() {
+            document.getElementById("meaning-display").style.display = "block";
+            document.getElementById("show-meaning-btn").style.display = "none"; // Hide the button once clicked
+        }
+
+        function answer(correct) {
+            fetch('/answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ word: currentWord, correct: correct })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("score-display").innerText = `Score: ${data.score}`;
+                getWord(); // Move to the next word
+            })
+            .catch(() => {
+                document.getElementById("error-msg").innerText = "Error submitting answer. Try again.";
+            });
+        }
+
+        function markNeverRepeat() {
+            fetch('/answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ word: currentWord, action: "never_repeat" })
+            })
+            .then(() => getWord())  // Move to the next word
+            .catch(() => {
+                document.getElementById("error-msg").innerText = "Error marking as never repeat. Try again.";
+            });
+        }
+
+        function finishQuiz() {
+            fetch('/finish')
+                .then(response => response.json())
+                .then(data => {
+                    // Update the quiz container with final results
+                    document.getElementById("quiz-container").innerHTML = `
+                        <h1>Quiz Finished!</h1>
+                        <p>Your Final Score: ${data.score} out of ${data.total}</p>
+                        <button onclick="window.location.reload()">Restart Quiz</button>
+                    `;
+                })
+                .catch(() => {
+                    document.getElementById("error-msg").innerText = "Error finishing quiz. Try again.";
+                });
+        }
+    </script>
+</body>
+</html>
