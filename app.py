@@ -40,7 +40,7 @@ def get_word():
     if word_entry:
         session['attempted'] += 1  # Increment attempted count for each new word
         capitalized_word = word_entry["en"].capitalize()
-        return jsonify({capitalized_word, "meaning": word_entry["bn"]})
+        return jsonify({"word": capitalized_word, "meaning": word_entry["bn"]})
     else:
         return jsonify({"error": "No more words available"})
 
