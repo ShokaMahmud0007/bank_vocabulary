@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>English to Bangla Quiz</title>
-    <style>    
+    <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -14,7 +14,7 @@
         }
         #quiz-container {
             background-color: #ffffff;
-            padding: 20px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             display: inline-block;
@@ -48,6 +48,21 @@
         #error-msg {
             color: red;
         }
+        #word-display {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        #word-display span {
+            font-size: 28px;
+            font-weight: bold;
+            color: blue;
+        }
+        #meaning-container {
+            margin-top: 20px;
+        }
+        #meaning-display {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -80,10 +95,10 @@
                         document.getElementById("meaning-container").style.display = "none";
                     } else {
                         currentWord = data.word;
-                        document.getElementById("word-display").innerText = ` ${data.word}`;
+                        document.getElementById("word-display").innerHTML = `<span>${data.word}</span>`;
                         document.getElementById("meaning-display").innerText = `Meaning: ${data.meaning}`;
                         document.getElementById("meaning-container").style.display = "block";
-                        document.getElementById("meaning-display").style.display = "none"; // Hide meaning initially
+                        document.getElementById("meaning-display").style.display = "none";
                         document.getElementById("show-meaning-btn").style.display = "inline-block";
                     }
                 })
@@ -94,7 +109,7 @@
 
         function showMeaning() {
             document.getElementById("meaning-display").style.display = "block";
-            document.getElementById("show-meaning-btn").style.display = "none"; // Hide the button once clicked
+            document.getElementById("show-meaning-btn").style.display = "none";
         }
 
         function answer(correct) {
@@ -106,7 +121,7 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById("score-display").innerText = `Score: ${data.score}`;
-                getWord(); // Move to the next word
+                getWord();
             })
             .catch(() => {
                 document.getElementById("error-msg").innerText = "Error submitting answer. Try again.";
@@ -119,7 +134,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ word: currentWord, action: "never_repeat" })
             })
-            .then(() => getWord())  // Move to the next word
+            .then(() => getWord())
             .catch(() => {
                 document.getElementById("error-msg").innerText = "Error marking as never repeat. Try again.";
             });
@@ -129,7 +144,6 @@
             fetch('/finish')
                 .then(response => response.json())
                 .then(data => {
-                    // Update the quiz container with final results
                     document.getElementById("quiz-container").innerHTML = `
                         <h1>Quiz Finished!</h1>
                         <p>Your Final Score: ${data.score} out of ${data.total}</p>
