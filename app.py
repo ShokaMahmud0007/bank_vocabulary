@@ -4,34 +4,45 @@ import random
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Set a secure secret key for session handling
+app.secret_key = 'your_secret_key'
 
 dictionary_file = "english_to_bangla_dictionary.json"
 never_repeat_file = "never_repeat.json"
 
-# Load the dictionary
+# Load dictionary and never_repeat list (same as before)
 if os.path.exists(dictionary_file):
     with open(dictionary_file, "r", encoding="utf-8") as file:
         eng_to_bangla_dict = json.load(file)
 else:
     eng_to_bangla_dict = []
 
-# Load or initialize the never_repeat list
 if os.path.exists(never_repeat_file):
     with open(never_repeat_file, "r", encoding="utf-8") as f:
         never_repeat = json.load(f)
 else:
     never_repeat = []
 
-# Helper function to get a random word not in never_repeat
+# Helper function to get a non-repeating random word
 def get_random_word():
-    available_words = [entry for entry in eng_to_bangla_dict if entry["en"] not in never_repeat]
-    return random.choice(available_words) if available_words else None
+    # Combine never_repeat + words already shown in this session
+    excluded_words = never_repeat + session.get('shown_words', [])
+    available_words = [entry for entry in eng_to_bangla_dict if entry["en"] not in excluded_words]
+    
+    if available_words:
+        chosen_word = random.choice(available_words)
+        # Track shown words in the current session
+        if 'shown_words' not in session:
+            session['shown_words'] = []
+        session['shown_words'].append(chosen_word["en"])
+        session.modified = True  # Ensure session is saved
+        return chosen_word
+    return None
 
 @app.route('/')
 def index():
+    session.clear()  # Reset session for a new quiz
     session['score'] = 0
-    session['attempted'] = 0  # Track total words attempted
+    session['attempted'] = 0
     return render_template('index.html')
 
 @app.route('/get_word')
